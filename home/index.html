@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QB Ranker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated background circles */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .circle:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: -150px;
+            left: -150px;
+            animation-delay: 0s;
+            animation-duration: 25s;
+        }
+
+        .circle:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            top: 50%;
+            right: -100px;
+            animation-delay: 3s;
+            animation-duration: 20s;
+        }
+
+        .circle:nth-child(3) {
+            width: 400px;
+            height: 400px;
+            bottom: -200px;
+            left: 30%;
+            animation-delay: 7s;
+            animation-duration: 30s;
+        }
+
+        .circle:nth-child(4) {
+            width: 150px;
+            height: 150px;
+            top: 20%;
+            right: 20%;
+            animation-delay: 2s;
+            animation-duration: 18s;
+        }
+
+        .circle:nth-child(5) {
+            width: 250px;
+            height: 250px;
+            bottom: 10%;
+            right: 10%;
+            animation-delay: 5s;
+            animation-duration: 22s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.3;
+            }
+            25% {
+                transform: translate(50px, -50px) scale(1.1);
+                opacity: 0.5;
+            }
+            50% {
+                transform: translate(-30px, -80px) scale(0.9);
+                opacity: 0.4;
+            }
+            75% {
+                transform: translate(70px, -30px) scale(1.05);
+                opacity: 0.6;
+            }
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 20px 15px 20px;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2em;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1em;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 20px 20px 20px;
+            min-height: 0;
+        }
+
+        .comparison-container {
+            display: flex;
+            gap: 30px;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            justify-content: center;
+            align-items: stretch;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .option-card {
+            flex: 1;
+            max-width: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .option-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .option-card:active {
+            transform: translateY(-2px);
+        }
+
+        .image-container {
+            width: 100%;
+            flex: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            min-height: 0;
+            position: relative;
+        }
+
+        .qb-headshot {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+        }
+
+        .qb-photo-placeholder {
+            font-size: 100px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .team-logo {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .team-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .rating-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #667eea;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .option-info {
+            padding: 15px;
+            text-align: center;
+            flex-shrink: 0;
+            background: white;
+        }
+
+        .option-info h2 {
+            color: #1c1e21;
+            margin-bottom: 5px;
+            font-size: 1.3em;
+        }
+
+        .option-info p {
+            color: #65676b;
+            font-size: 0.9em;
+        }
+
+        .select-button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(to bottom, #667eea, #764ba2);
+            color: white;
+            border: none;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .select-button:hover {
+            background: linear-gradient(to bottom, #5568d3, #654a94);
+        }
+
+        .select-button:active {
+            transform: scale(0.98);
+        }
+
+        .vs-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            min-width: 50px;
+            flex-shrink: 0;
+        }
+
+        .rankings-display {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            max-width: 100%;
+            width: 100%;
+            margin: 15px auto 0 auto;
+            flex-shrink: 0;
+            max-height: 280px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .rankings-header {
+            background: white;
+            padding: 15px;
+            border-bottom: 2px solid #e4e6eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .rankings-header h3 {
+            color: #1c1e21;
+            font-size: 1.1em;
+        }
+
+        .total-votes {
+            color: #65676b;
+            font-size: 0.9em;
+        }
+
+        .search-container {
+            padding: 10px 15px;
+            background: white;
+            border-bottom: 1px solid #e4e6eb;
+            flex-shrink: 0;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e4e6eb;
+            border-radius: 20px;
+            font-size: 0.95em;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .rankings-list {
+            padding: 10px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .rankings-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .rankings-list::-webkit-scrollbar-track {
+            background: #f0f2f5;
+            border-radius: 4px;
+        }
+
+        .rankings-list::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        .rankings-list::-webkit-scrollbar-thumb:hover {
+            background: #5568d3;
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin: 3px 0;
+            background: #f0f2f5;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .ranking-item:hover {
+            background: #e4e6eb;
+            transform: translateX(5px);
+        }
+
+        .ranking-item.hidden {
+            display: none;
+        }
+
+        .rank-number {
+            font-weight: bold;
+            color: #667eea;
+            min-width: 30px;
+            font-size: 1em;
+        }
+
+        .qb-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+            object-fit: cover;
+            background: #e4e6eb;
+            border: 2px solid white;
+        }
+
+        .qb-name {
+            flex: 1;
+            font-weight: 500;
+            color: #1c1e21;
+            font-size: 0.95em;
+        }
+
+        .qb-team {
+            color: #65676b;
+            margin-right: 15px;
+            font-size: 0.85em;
+        }
+
+        .qb-rating {
+            font-weight: bold;
+            color: #667eea;
+            min-width: 50px;
+            text-align: right;
+            font-size: 1em;
+        }
+
+        .winner-flash {
+            animation: flash 0.5s ease;
+        }
+
+        @keyframes flash {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4); }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #65676b;
+        }
+
+        .image-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9em;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #65676b;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .comparison-container {
+                gap: 15px;
+            }
+
+            .team-logo {
+                font-size: 24px;
+                width: 40px;
+                height: 40px;
+            }
+
+            .circle {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .comparison-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .vs-divider {
+                transform: rotate(90deg);
+                margin: 0;
+                min-height: 30px;
+            }
+
+            .option-card {
+                max-width: 100%;
+                max-height: 40vh;
+            }
+
+            .rankings-display {
+                max-height: 200px;
+            }
+
+            .qb-team {
+                display: none;
+            }
+
+            .qb-avatar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+    </div>
+
+    <div class="content-wrapper">
+        <div class="header">
+            <h1>NFL QB Ranker</h1>
+            <p>Click on the better quarterback</p>
+        </div>
+
+        <div class="main-content">
+            <div class="comparison-container">
+                <div class="option-card" id="card1" onclick="selectOption(1)">
+                    <div class="image-container" id="imageContainer1">
+                        <div class="rating-badge" id="rating1">1500</div>
+                        <div class="team-logo" id="teamLogo1">🏈</div>
+                        <div class="qb-photo-placeholder">🏈</div>
+                        <div class="image-loading">Loading...</div>
+                    </div>
+                    <div class="option-info">
+                        <h2 id="name1">Loading...</h2>
+                        <p id="team-name1">---</p>
+                    </div>
+                    <button class="select-button">Select This QB</button>
+                </div>
+
+                <div class="vs-divider">VS</div>
+
+                <div class="option-card" id="card2" onclick="selectOption(2)">
+                    <div class="image-container" id="imageContainer2">
+                        <div class="rating-badge" id="rating2">1500</div>
+                        <div class="team-logo" id="teamLogo2">🏈</div>
+                        <div class="qb-photo-placeholder">🏈</div>
+                        <div class="image-loading">Loading...</div>
+                    </div>
+                    <div class="option-info">
+                        <h2 id="name2">Loading...</h2>
+                        <p id="team-name2">---</p>
+                    </div>
+                    <button class="select-button">Select This QB</button>
+                </div>
+            </div>
+
+            <div class="rankings-display">
+                <div class="rankings-header">
+                    <h3>Current Rankings</h3>
+                    <span class="total-votes" id="totalVotes">0 total comparisons</span>
+                </div>
+                <div class="search-container">
+                    <input 
+                        type="text" 
+                        class="search-input" 
+                        id="searchInput" 
+                        placeholder="Search quarterbacks..."
+                        oninput="filterRankings()"
+                    >
+                </div>
+                <div class="rankings-list" id="rankingsList">
+                    <div class="loading">Loading rankings...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // WebSocket connection
+        let ws;
+        let currentQBs = { qb1: null, qb2: null };
+        let allQBs = [];
+
+        // Fuzzy search function (70% relevance)
+        function fuzzyMatch(str, pattern) {
+            if (!pattern) return true;
+            
+            str = str.toLowerCase();
+            pattern = pattern.toLowerCase();
+            
+            // Direct substring match
+            if (str.includes(pattern)) return true;
+            
+            // Calculate similarity score
+            let score = 0;
+            let patternIdx = 0;
+            
+            for (let i = 0; i < str.length && patternIdx < pattern.length; i++) {
+                if (str[i] === pattern[patternIdx]) {
+                    score++;
+                    patternIdx++;
+                }
+            }
+            
+            const similarity = score / pattern.length;
+            return similarity >= 0.7; // 70% match
+        }
+
+        function filterRankings() {
+            const searchTerm = document.getElementById('searchInput').value;
+            const rankingItems = document.querySelectorAll('.ranking-item');
+            let visibleCount = 0;
+            
+            rankingItems.forEach(item => {
+                const name = item.dataset.name || '';
+                const team = item.dataset.team || '';
+                
+                const matchesName = fuzzyMatch(name, searchTerm);
+                const matchesTeam = fuzzyMatch(team, searchTerm);
+                
+                if (matchesName || matchesTeam) {
+                    item.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+            
+            // Show "no results" message if needed
+            const rankingsList = document.getElementById('rankingsList');
+            let noResults = rankingsList.querySelector('.no-results');
+            
+            if (visibleCount === 0 && searchTerm) {
+                if (!noResults) {
+                    noResults = document.createElement('div');
+                    noResults.className = 'no-results';
+                    noResults.textContent = 'No quarterbacks found';
+                    rankingsList.appendChild(noResults);
+                }
+            } else if (noResults) {
+                noResults.remove();
+            }
+        }
+
+        // Connect to WebSocket server
+        function connectWebSocket() {
+            ws = new WebSocket('ws://localhost:3000');
+            
+            ws.onopen = () => {
+                console.log('Connected to server');
+                requestNewMatchup();
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleServerMessage(data);
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+            
+            ws.onclose = () => {
+                console.log('Disconnected from server');
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        function handleServerMessage(data) {
+            switch(data.type) {
+                case 'matchup':
+                    displayMatchup(data.qb1, data.qb2);
+                    break;
+                case 'rankings':
+                    updateRankings(data.qbs, data.totalVotes);
+                    break;
+                case 'update':
+                    updateRankings(data.qbs, data.totalVotes);
+                    break;
+            }
+        }
+
+        function displayMatchup(qb1, qb2) {
+            currentQBs = { qb1, qb2 };
+            
+            // Update QB 1
+            document.getElementById('name1').textContent = qb1.name;
+            document.getElementById('team-name1').textContent = qb1.team;
+            document.getElementById('rating1').textContent = Math.round(qb1.rating);
+            
+            // Load headshot for QB 1
+            loadHeadshot(1, qb1);
+            
+            // Update QB 2
+            document.getElementById('name2').textContent = qb2.name;
+            document.getElementById('team-name2').textContent = qb2.team;
+            document.getElementById('rating2').textContent = Math.round(qb2.rating);
+            
+            // Load headshot for QB 2
+            loadHeadshot(2, qb2);
+        }
+
+        function loadHeadshot(cardNum, qb) {
+            const container = document.getElementById(`imageContainer${cardNum}`);
+            const teamLogo = document.getElementById(`teamLogo${cardNum}`);
+            
+            // Clear previous content
+            const existingImg = container.querySelector('.qb-headshot');
+            if (existingImg) {
+                existingImg.remove();
+            }
+            
+            // Show team logo
+            if (qb.teamLogoUrl) {
+                teamLogo.innerHTML = `<img src="${qb.teamLogoUrl}" alt="${qb.team}">`;
+            } else {
+                teamLogo.textContent = qb.emoji;
+            }
+            
+            // Load headshot
+            if (qb.headshotUrl) {
+                const img = document.createElement('img');
+                img.className = 'qb-headshot';
+                img.src = qb.headshotUrl;
+                img.alt = qb.name;
+                
+                img.onload = () => {
+                    const placeholder = container.querySelector('.qb-photo-placeholder');
+                    const loading = container.querySelector('.image-loading');
+                    if (placeholder) placeholder.style.display = 'none';
+                    if (loading) loading.style.display = 'none';
+                };
+                
+                img.onerror = () => {
+                    console.error(`Failed to load headshot for ${qb.name}`);
+                    const loading = container.querySelector('.image-loading');
+                    if (loading) loading.textContent = 'Image unavailable';
+                };
+                
+                container.appendChild(img);
+            }
+        }
+
+        function selectOption(option) {
+            const winner = option === 1 ? currentQBs.qb1 : currentQBs.qb2;
+            const loser = option === 1 ? currentQBs.qb2 : currentQBs.qb1;
+            
+            // Flash animation
+            const card = document.getElementById(`card${option}`);
+            card.classList.add('winner-flash');
+            setTimeout(() => card.classList.remove('winner-flash'), 500);
+            
+            // Send vote to server
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'vote',
+                    winnerId: winner.id,
+                    loserId: loser.id
+                }));
+            }
+            
+            // Request new matchup
+            setTimeout(requestNewMatchup, 500);
+        }
+
+        function requestNewMatchup() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'getMatchup' }));
+            }
+        }
+
+        function updateRankings(qbs, totalVotes) {
+            allQBs = qbs;
+            const rankingsList = document.getElementById('rankingsList');
+            const totalVotesEl = document.getElementById('totalVotes');
+            
+            totalVotesEl.textContent = `${totalVotes} total comparisons`;
+            
+            // Sort by rating
+            const sortedQBs = [...qbs].sort((a, b) => b.rating - a.rating);
+            
+            rankingsList.innerHTML = sortedQBs.map((qb, index) => `
+                <div class="ranking-item" data-name="${qb.name}" data-team="${qb.team}">
+                    <span class="rank-number">${index + 1}.</span>
+                    ${qb.headshotUrl ? `<img src="${qb.headshotUrl}" alt="${qb.name}" class="qb-avatar">` : ''}
+                    <span class="qb-name">${qb.name}</span>
+                    <span class="qb-team">${qb.team}</span>
+                    <span class="qb-rating">${Math.round(qb.rating)}</span>
+                </div>
+            `).join('');
+            
+            // Reapply search filter if there's a search term
+            const searchTerm = document.getElementById('searchInput').value;
+            if (searchTerm) {
+                filterRankings();
+            }
+        }
+
+        // Connect on page load
+        connectWebSocket();
+    </script>
+</body>
+</html>
